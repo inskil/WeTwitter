@@ -6,6 +6,10 @@ from user import *
 # from Twitterdown import *
 
 KEY = '415151e48d6a4860884edaa26392f481'
+KEYWORD2 = u'hiahia~感谢使用We-Twitter。\n您可以发送【菜单】呼出使用指南哟~\n您可以使用以下功能：\
+                            \n1.获取最新微博消息请发送‘最新微博消息’\
+                            \n2.回复【关闭聊天机器人】可关闭自动聊天功能（回复【开启聊天】可开启）\
+                            \n3.回复【】可进入最新最热的推文推荐'
 KEYWORD = u'hiahia~感谢使用We-Twitter。\n您可以发送【菜单】呼出使用指南哟~\n您可以使用以下功能：\
                             \n1.按照格式【我想关注+XXX(您想关注的推特账号）+的推特】（加号不可省略哟）\
                             \n2.回复【关闭聊天机器人】可关闭自动聊天功能（回复【开启聊天】可开启）\
@@ -142,13 +146,19 @@ def text_reply(msg):
         elif '关闭' in message:
             changerobotmode(thisuser, False)
             replay = u'关闭成功'
-
-    # twitter function part
-    if (u'推特' in message) or (u'twitter' in message) or (u'Twitter' in message) or (u'菜单' in message):
+    # 微博部分
+    if (u'微博' in message) or (u'weibo' in message) or (u'菜单' in message):
         replay = KEYWORD
         if '我想关注' in message:
             fous_username = message.split('+')[1]
             toadd_focus(username, fous_username)
+
+    # twitter function part
+    # if (u'推特' in message) or (u'twitter' in message) or (u'Twitter' in message) or (u'菜单' in message):
+    #     replay = KEYWORD
+    #     if '我想关注' in message:
+    #         fous_username = message.split('+')[1]
+    #         toadd_focus(username, fous_username)
     elif replay == message:
         replay = u"不太懂你在说什么嘛~不过可以：\n" + KEYWORD
     return replay
