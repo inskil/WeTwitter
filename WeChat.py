@@ -1,21 +1,24 @@
 import itchat
 import requests
 import json
-from user import *
+import user
+import WeiBo
 
 # from Twitterdown import *
 
 KEY = '415151e48d6a4860884edaa26392f481'
-KEYWORD2 = u'hiahia~感谢使用We-Twitter。\n您可以发送【菜单】呼出使用指南哟~\n您可以使用以下功能：\
-                            \n1.获取最新微博消息请发送‘最新微博消息’\
+KEYWORD2 = u'hiahia~感谢使用We-Bo。\n您可以发送【菜单】呼出使用指南哟~\n您可以使用以下功能：\
+                            \n1.获取最新微博消息请发送【最新微博】\
                             \n2.回复【关闭聊天机器人】可关闭自动聊天功能（回复【开启聊天】可开启）\
-                            \n3.回复【】可进入最新最热的推文推荐'
+                            \n3.回复【最新微博+条数（数字）  eg：最新微博+3】可获得符合数量的最新消息'
 KEYWORD = u'hiahia~感谢使用We-Twitter。\n您可以发送【菜单】呼出使用指南哟~\n您可以使用以下功能：\
                             \n1.按照格式【我想关注+XXX(您想关注的推特账号）+的推特】（加号不可省略哟）\
                             \n2.回复【关闭聊天机器人】可关闭自动聊天功能（回复【开启聊天】可开启）\
                             \n3.回复【Twitter热门账户推荐】可进入最新最热的推文推荐'
 ADD_NEWUSER_TALK = '欢迎使用本系统，请回复【新用户添加】+【想要长期关注的推特账号列表（以’,‘（英文逗号）连接，如：Donald J. Trump,Robert ' \
-                   'Downey JR)，可以为空】(【】不需要）'
+                   'Downey JR)，可以为空 】(【】不需要）'
+
+ADD_NEWUSER_TALK2 = '欢迎使用本系统，请回复【新用户添加】，开始使用本系统~'
 robot_mode = True
 
 
@@ -23,18 +26,37 @@ def toadd_focus(username, addlist):
     # return new tweet
     # add the focus to the user's list
     # get_new_tweets(username,number)
-    add_focus(username, addlist)
+    user.add_focus(username, addlist)
 
 
-def add_newuser(username, nickname, user_list):
-    # add to userlist
-    print('log: username:')
-    print(username)
-    print('log: nikename:')
-    print(nickname)
-    print('log: userlist:')
-    print(user_list)
-    new_user(username, nickname, user_list)
+# def add_newuser1(username, nickname, user_list):
+#     # add to userlist
+#     print('log: username:')
+#     print(username)
+#     print('log: nikename:')
+#     print(nickname)
+#     print('log: userlist:')
+#     print(user_list)
+#     add_newuser(username, nickname, user_list)
+
+
+def add_newuser(username, nikename, message):
+    try:
+        code = message.split('=')[-1]
+        print('code is =' + code)
+        userwbinfo = WeiBo.make_new_user(code)
+        print(type(userwbinfo))
+        dic = {
+            'username': username,
+            'nikename': nikename,
+            # 'access_token':userwbinfo['access_token']
+        }
+        dic.update(userwbinfo)
+        print(dic)
+        user.savenew_user(username, dic)
+        return True
+    except:
+        print('logs(inWeChat add_newuser) :error')
 
 
 '''机器人部分'''
@@ -98,11 +120,11 @@ def ext():
 @itchat.msg_register([itchat.content.MAP, itchat.content.CARD, itchat.content.PICTURE, itchat.content.RECORDING,
                       itchat.content.ATTACHMENT, itchat.content.VIDEO, itchat.content.FRIENDS, itchat.content.SYSTEM, ])
 def simple_reply(msg):
-    print(msg)
-    print(msg['Type'])
+    # print(msg)
+    # print(msg['Type'])
     reply = (u"暂时无法识别" + msg['Type'] + u"哟~请发送文字(づ￣3￣)づ╭❤～")
-    if not in_user_list(msg.get('FromUserName')):
-        itchat.send(ADD_NEWUSER_TALK, msg.get('FromUserName'))
+    if not user.in_user_list(msg.get('FromUserName')):
+        itchat.send(ADD_NEWUSER_TALK2, msg.get('FromUserName'))
     return reply
 
 
@@ -112,46 +134,64 @@ def text_reply(msg):
     print("log: text here had somethings\n")
     print(msg)
     message = msg['Text']
-    print('message is :'+message)
+    print('message is :' + message)
     username = msg.get('FromUserName')
     print('log: username=' + username)
     # if a new user
-    if not in_user_list(username) and not ('新用户添加' in message):
-        replay = ADD_NEWUSER_TALK
+    if not user.in_user_list(username) and not ('新用户添加' in message) and not ('code=' in message):
+        replay = ADD_NEWUSER_TALK2
         return replay
     # new user add part
     if '新用户添加' in message:
-        message_list = message.split('+')
-        print(message_list)
-        if len(message_list) == 1:
-            print('logq')
-            focus_list = []
-        else:
-            focus_list = message_list[1].split(',')
-        print('log: focuslist')
-        print(focus_list)
+        # message_list = message.split('+')
+        # print(message_list)
+        # if len(message_list) == 1:
+        #     print('logq')
+        #     focus_list = []
+        # else:
+        #     focus_list = message_list[1].split(',')
+        # print('log: focuslist')
+        # print(focus_list)
+        # nikename = itchat.search_friends(userName=msg['FromUserName'])['NickName']
+        # add_newuser(username, nikename, focus_list)
+        url = WeiBo.GET_UESER_URL
+        re_msg = u'使用本功能需要得到微博授权哟~,点击网页进行授权,授权成功后复制网址链接回复到窗口哟~：' + url
+        return re_msg
+    if 'code=' in message and 'http' in message:
         nikename = itchat.search_friends(userName=msg['FromUserName'])['NickName']
-        add_newuser(username, nikename, focus_list)
-        return u'添加成功哟~聊天机器人默认开启，请随意调戏~关闭可回复【聊天关闭】，回复【菜单】开启菜单哟~'
-    thisuser = get_user(username)
+        if add_newuser(username, nikename, message):
+            return u'授权成功，机器人默认开启，请随意调戏哟~'
+        return u'授权失败，联系本人吧'
+    thisuser = user.get_user(username)
     # robot_mode part
-    if get_user_robotmode(thisuser):
+    if user.get_user_robotmode(thisuser):
         replay = get_response(message)
     else:
         replay = None
     if '聊天' in message:
         if '开启' in message:
-            changerobotmode(thisuser, True)
+            user.chg_robotmode(thisuser, True)
             replay = u'开启成功，请随意调戏'
         elif '关闭' in message:
-            changerobotmode(thisuser, False)
+            user.chg_robotmode(thisuser, False)
             replay = u'关闭成功'
+    elif replay == message:
+        replay = u"不太懂你在说什么嘛~不过可以：\n" + KEYWORD2
+
     # 微博部分
-    if (u'微博' in message) or (u'weibo' in message) or (u'菜单' in message):
-        replay = KEYWORD
-        if '我想关注' in message:
-            fous_username = message.split('+')[1]
-            toadd_focus(username, fous_username)
+    if (u'最新微博' in message):
+        if '+' in message:
+            count = int(message.split('+')[-1])
+            replay = WeiBo.get_newTimeLine(username,count=count)
+        else:
+            replay = WeiBo.get_newTimeLine(username,1)
+        for info in replay:
+            if info[0] == 'text':
+                itchat.send(info[1], username)
+            elif info[0] == 'pic':
+                itchat.send_image(info[1], username)
+        replay = '以上为最新消息~'
+    # if ('获取')
 
     # twitter function part
     # if (u'推特' in message) or (u'twitter' in message) or (u'Twitter' in message) or (u'菜单' in message):
@@ -159,8 +199,7 @@ def text_reply(msg):
     #     if '我想关注' in message:
     #         fous_username = message.split('+')[1]
     #         toadd_focus(username, fous_username)
-    elif replay == message:
-        replay = u"不太懂你在说什么嘛~不过可以：\n" + KEYWORD
+
     return replay
 
 
@@ -174,6 +213,6 @@ def wechat_begin():
 def wechat_run():
     itchat.run()
 
-
+user.main()
 wechat_begin()
 wechat_run()
