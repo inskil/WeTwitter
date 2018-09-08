@@ -3,6 +3,9 @@ import requests
 import os
 import time
 import user
+import PicMaker
+import threading
+import WeChat
 
 # 一大堆有用没用的常量 唉
 APP_KEY = '2740277281'
@@ -58,15 +61,15 @@ def get_Access_Token(code):
     }
     r = requests.post(Access_Token_URL, params)
     print(r.url)
-    print(r.json())
-    print(type(r.json()))
+    # print(r.json())
+    # print(type(r.json()))
     userinfo = r.json()
     print(userinfo)
     # add_newuser()
     return userinfo
 
 
-def get_newTimeLine(username = '@e200cc6d0c446c7dd2efd98e5424e2df990a4379c123be4796920b2e8176b55e', count=1):
+def get_newTimeLine(nikename='WT', count=1):
     # access_token	true	string	采用OAuth授权方式为必填参数，OAuth授权后获得。
     # since_id	false	int64	若指定此参数，则返回ID比since_id大的微博（即比since_id时间晚的微博），默认为0。
     # max_id	false	int64	若指定此参数，则返回ID小于或等于max_id的微博，默认为0。
@@ -75,7 +78,11 @@ def get_newTimeLine(username = '@e200cc6d0c446c7dd2efd98e5424e2df990a4379c123be4
     # base_app	false	int	是否只获取当前应用的数据。0为否（所有数据），1为是（仅当前应用），默认为0。
     # feature	false	int	过滤类型ID，0：全部、1：原创、2：图片、3：视频、4：音乐，默认为0。
     # trim_user	false	int	返回值中user字段开关，0：返回完整user字段、1：user字段仅返回user_id，默认为0。
-    access_token = user.get_access_token(username)
+    try:
+        down.join()
+    except:
+        print('had down')
+    access_token = user.get_access_token(nikename)
     GET_USER_TIMELINE = 'https://api.weibo.com/2/statuses/home_timeline.json'
     ms = []
     r = {}
@@ -95,10 +102,12 @@ def get_newTimeLine(username = '@e200cc6d0c446c7dd2efd98e5424e2df990a4379c123be4
             print(news)
             timeline = NewTimeLine(news)
             # saveid(timeline.get_uid(), timeline.get_name(), timeline.get_screenname())
-            st = timeline.print_mse
+            mid = timeline.get_mid()
+            pic = PicMaker.get_pic(mid)
+            st = ['pic', pic]
             ms += st
         except:
-            return  ['text', '错误']
+            return ['text', '错误']
     else:
         for i in range(count):
             try:
@@ -107,9 +116,10 @@ def get_newTimeLine(username = '@e200cc6d0c446c7dd2efd98e5424e2df990a4379c123be4
                 print(news)
                 timeline = NewTimeLine(news)
                 # saveid(timeline.get_uid(), timeline.get_name(), timeline.get_screenname())
-                st = timeline.print_mse
-                ms.append(['text', '以下为第%d条微博' % (i+1)])
-                ms += st
+                mid = timeline.get_mid()
+                pic = PicMaker.get_pic(mid)
+                ms.append(['text', '以下为第%d条微博' % (i + 1)])
+                ms.append(['pic', pic])
             except:
                 print('news info error!')
                 return ['text', '错误']
@@ -117,6 +127,57 @@ def get_newTimeLine(username = '@e200cc6d0c446c7dd2efd98e5424e2df990a4379c123be4
     print(ms)
     return ms
 
+
+# def get_newTimeLine(username = '@e200cc6d0c446c7dd2efd98e5424e2df990a4379c123be4796920b2e8176b55e', count=1):
+#     # access_token	true	string	采用OAuth授权方式为必填参数，OAuth授权后获得。
+#     # since_id	false	int64	若指定此参数，则返回ID比since_id大的微博（即比since_id时间晚的微博），默认为0。
+#     # max_id	false	int64	若指定此参数，则返回ID小于或等于max_id的微博，默认为0。
+#     # count	false	int	单页返回的记录条数，最大不超过100，默认为20。
+#     # page	false	int	返回结果的页码，默认为1。
+#     # base_app	false	int	是否只获取当前应用的数据。0为否（所有数据），1为是（仅当前应用），默认为0。
+#     # feature	false	int	过滤类型ID，0：全部、1：原创、2：图片、3：视频、4：音乐，默认为0。
+#     # trim_user	false	int	返回值中user字段开关，0：返回完整user字段、1：user字段仅返回user_id，默认为0。
+#     access_token = user.get_access_token(username)
+#     GET_USER_TIMELINE = 'https://api.weibo.com/2/statuses/home_timeline.json'
+#     ms = []
+#     r = {}
+#     try:
+#         params = {'access_token': access_token,
+#                   'count': count,
+#                   }
+#         r = requests.get(GET_USER_TIMELINE, params)
+#         print(r.text)
+#     except:
+#         print('Error: 最新消息字典获取失败，请求速度过快，尝试歇一歇')
+#     # 获取完以后开始解码
+#     if count == 1:
+#         try:
+#             news = r.json()['statuses'][0]
+#             print('logs: in get_newTimeLine this is the news in turn:')
+#             print(news)
+#             timeline = NewTimeLine(news)
+#             # saveid(timeline.get_uid(), timeline.get_name(), timeline.get_screenname())
+#             st = timeline.print_mse
+#             ms += st
+#         except:
+#             return  ['text', '错误']
+#     else:
+#         for i in range(count):
+#             try:
+#                 news = r.json()['statuses'][i]
+#                 print('logs: in get_newTimeLine this is the news in turn:')
+#                 print(news)
+#                 timeline = NewTimeLine(news)
+#                 # saveid(timeline.get_uid(), timeline.get_name(), timeline.get_screenname())
+#                 st = timeline.print_mse
+#                 ms.append(['text', '以下为第%d条微博' % (i+1)])
+#                 ms += st
+#             except:
+#                 print('news info error!')
+#                 return ['text', '错误']
+#     print('logs in get_newTimeLine,the all msg is :')
+#     print(ms)
+#     return ms
 
 class NewTimeLine:
     news = {}
@@ -269,8 +330,39 @@ def get_newidtweet():
 
 def make_new_user(code):
     userinfo = get_Access_Token(code)
-    print('logs(in WeiBo make_new_user) userinfo is :')
-    print(userinfo)
+    # print('logs(in WeiBo make_new_user) userinfo is :')
+    # print(userinfo)
     if 'error_code' in userinfo:
         print('logs error error_code is :' + userinfo['error_code'])
     return userinfo
+
+
+def down_ten(nikename):
+    access_token = user.get_access_token(nikename)
+    GET_USER_TIMELINE = 'https://api.weibo.com/2/statuses/home_timeline.json'
+    try:
+        params = {'access_token': access_token,
+                  'count': 5,
+                  }
+        r = requests.get(GET_USER_TIMELINE, params)
+        # 获取完以后开始解码
+        for i in range(5):
+            try:
+                news = r.json()['statuses'][i]
+                timeline = NewTimeLine(news)
+                mid = timeline.get_mid()
+                PicMaker.get_pic(mid)
+                WeChat.itchat.send('后台数据处理完成！', user.get_user_username(nikename))
+            except:
+                print('预加载 news info error!')
+    except:
+        print('Error: 预加载失败：最新消息字典获取失败，请求速度过快，尝试歇一歇')
+
+
+def prdown(nikename):
+    try:
+        global down
+        down = threading.Thread(target=down_ten, args=(nikename,))
+        down.start()
+    except:
+        print("pre down is wrong!")
