@@ -3,13 +3,6 @@ from urllib import request
 import PicMaker
 import WeChat
 
-# f = open('read.html',encoding='UTF-8')
-# # f = request.urlopen(endpoint+request.quote(user))
-# html = f.read().encode('utf-8')
-# # print(html.decode("gbk"))
-# soup = BeautifulSoup(f,'lxml')
-# f.close()
-
 def search(user):
     endpoint = "https://twitter.com/search?f=users&src=typd&q="
     print('search twitter start....')
@@ -39,7 +32,7 @@ def find_byid(id):
     # html = f.read().encode('utf-8')
     soup = BeautifulSoup(f, 'lxml')
     find = soup.find_all(class_='tweet-timestamp js-permalink js-nav js-tooltip',limit=5)
-    # print(find)
+    print(find)
     re_url = []
     re_text= []
     for tag in find:

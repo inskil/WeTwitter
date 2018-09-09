@@ -90,7 +90,7 @@ def add_newuser(username, nikename, message):
         dic.update(userwbinfo)
         print(dic)
         user.savenew_user(nikename, dic)
-        WeiBo.prdown(nikename)
+        WeiBo.prdown(username,nikename)
         return True
     except:
         print('logs(inWeChat add_newuser) :error')

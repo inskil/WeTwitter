@@ -337,7 +337,7 @@ def make_new_user(code):
     return userinfo
 
 
-def down_ten(nikename):
+def down_ten(username,nikename):
     access_token = user.get_access_token(nikename)
     GET_USER_TIMELINE = 'https://api.weibo.com/2/statuses/home_timeline.json'
     try:
@@ -352,17 +352,17 @@ def down_ten(nikename):
                 timeline = NewTimeLine(news)
                 mid = timeline.get_mid()
                 PicMaker.get_pic(mid)
-                WeChat.itchat.send('后台数据处理完成！', user.get_user_username(nikename))
             except:
                 print('预加载 news info error!')
+        WeChat.itchat.send('后台数据处理完成！', username)
     except:
         print('Error: 预加载失败：最新消息字典获取失败，请求速度过快，尝试歇一歇')
 
 
-def prdown(nikename):
+def prdown(username,nikename):
     try:
         global down
-        down = threading.Thread(target=down_ten, args=(nikename,))
+        down = threading.Thread(target=down_ten, args=(username,nikename,))
         down.start()
     except:
         print("pre down is wrong!")
